@@ -22,12 +22,12 @@ public class PayController : Controller
     [HttpGet]
     public async Task<IActionResult> GetPayConfig([FromRoute]string user)
     {
-        var host = _config?.Host ?? Request.Host.ToString();
+        var baseUrl = _config?.BaseUrl ?? new Uri($"{Request.Scheme}://{Request.Host}");
 
         var profile = await _api.GetProfile(user);
         if (profile != default)
         {
-            var lnpayUri = $"{Request.Scheme}://{host}/pay/{user}/lnurl/payRequest";
+            var lnpayUri = $"{baseUrl}/pay/{user}/lnurl/payRequest";
             var lnurl = LNURL.LNURL.EncodeBech32(new Uri(lnpayUri)).ToUpper();
 
             using var qrData = QRCoder.QRCodeGenerator.GenerateQrCode(
@@ -49,7 +49,7 @@ public class PayController : Controller
     [Route("lnurl/payRequest")]
     public IActionResult GetLNURLConfig([FromRoute] string user)
     {
-        var host = _config?.Host ?? Request.Host.ToString();
+        var baseUrl = _config?.BaseUrl ?? new Uri($"{Request.Scheme}://{Request.Host}");
         var id = Guid.NewGuid();
 
         var metadata = new List<string[]>()
@@ -59,7 +59,7 @@ public class PayController : Controller
         
         var req = new LNURLPayRequest()
         {
-            Callback = new Uri($"{Request.Scheme}://{host}/pay/{user}/lnurl/payRequest/invoice?id={id}"),
+            Callback = new Uri($"{baseUrl}/pay/{user}/lnurl/payRequest/invoice?id={id}"),
             MaxSendable = 100_000_000,
             MinSendable = 100,
             Metadata = JsonConvert.SerializeObject(metadata)
