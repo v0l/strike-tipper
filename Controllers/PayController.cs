@@ -64,7 +64,8 @@ public class PayController : Controller
             Callback = new Uri(baseUrl, $"pay/{user}/lnurl/payRequest/invoice?id={id}"),
             MaxSendable = 100_000_000,
             MinSendable = 100,
-            Metadata = JsonConvert.SerializeObject(metadata)
+            Metadata = JsonConvert.SerializeObject(metadata),
+            Tag = "payRequest"
         };
 
         return Content(JsonConvert.SerializeObject(req), "application/json");
