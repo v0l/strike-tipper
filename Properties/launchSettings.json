@@ -1,0 +1,14 @@
+﻿{
+  "profiles": {
+    "StrikeTipWidget": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "https://*:8080",
+      "launchUrl": "https://localhost:3000",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
