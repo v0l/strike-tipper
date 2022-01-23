@@ -27,8 +27,8 @@ public class PayController : Controller
         var profile = await _api.GetProfile(user);
         if (profile != default)
         {
-            var lnpayUri = $"{baseUrl}/pay/{user}/lnurl/payRequest";
-            var lnurl = LNURL.LNURL.EncodeBech32(new Uri(lnpayUri)).ToUpper();
+            var lnpayUri = new Uri(baseUrl, $"pay/{user}/lnurl/payRequest");
+            var lnurl = LNURL.LNURL.EncodeBech32(lnpayUri).ToUpper();
 
             using var qrData = QRCoder.QRCodeGenerator.GenerateQrCode(
                 Encoding.UTF8.GetBytes(lnurl),
@@ -59,7 +59,7 @@ public class PayController : Controller
         
         var req = new LNURLPayRequest()
         {
-            Callback = new Uri($"{baseUrl}/pay/{user}/lnurl/payRequest/invoice?id={id}"),
+            Callback = new Uri(baseUrl, $"pay/{user}/lnurl/payRequest/invoice?id={id}"),
             MaxSendable = 100_000_000,
             MinSendable = 100,
             Metadata = JsonConvert.SerializeObject(metadata)
