@@ -1,4 +1,6 @@
+using System.Globalization;
 using System.Text;
+using BTCPayServer.Lightning;
 using LNURL;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -70,8 +72,40 @@ public class PayController : Controller
 
     [HttpGet]
     [Route("lnurl/payRequest/invoice")]
-    public IActionResult GetInvoice([FromRoute] string user, [FromQuery] Guid id, [FromQuery] string amount)
+    public async Task<IActionResult> GetInvoice([FromRoute] string user, [FromQuery] Guid id, [FromQuery] long amount)
     {
-        return NoContent();
+        try
+        {
+            var invoice = await _api.GenerateInvoice(new()
+            {
+                Amount = new()
+                {
+                    Amount = LightMoney.MilliSatoshis(amount)
+                        .ToUnit(LightMoneyUnit.BTC)
+                        .ToString(CultureInfo.InvariantCulture),
+                    Currency = Currencies.BTC
+                },
+                CorrelationId = id.ToString(),
+                Description = "tip",
+                Handle = user
+            });
+
+            var quote = await _api.GetInvoiceQuote(invoice.InvoiceId);
+
+            var rsp = new LNURLPayRequest.LNURLPayRequestCallbackResponse()
+            {
+                Pr = quote.LnInvoice
+            };
+
+            return Content(JsonConvert.SerializeObject(rsp), "application/json");
+        }
+        catch (Exception ex)
+        {
+            return Content(JsonConvert.SerializeObject(new
+            {
+                Status = "ERROR",
+                Reason = ex.Message
+            }));
+        }
     }
 }
