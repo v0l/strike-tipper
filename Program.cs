@@ -1,3 +1,4 @@
+using StrikeTipWidget;
 using StrikeTipWidget.Strike;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,6 +8,9 @@ var configuration = builder.Configuration;
 
 var strikeApiConfig = configuration.GetSection("StrikeApi").Get<PartnerApiSettings>();
 services.AddSingleton(strikeApiConfig);
+
+var mainConfig = configuration.GetSection("Tipper").Get<TipperConfig>();
+services.AddSingleton(mainConfig);
 
 services.AddTransient<PartnerApi>();
 services.AddControllers();

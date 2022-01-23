@@ -11,16 +11,18 @@ namespace StrikeTipWidget.Controllers;
 public class PayController : Controller
 {
     private readonly PartnerApi _api;
+    private readonly TipperConfig _config;
 
-    public PayController(PartnerApi api)
+    public PayController(PartnerApi api, TipperConfig config)
     {
         _api = api;
+        _config = config;
     }
 
     [HttpGet]
     public async Task<IActionResult> GetPayConfig([FromRoute]string user)
     {
-        var host = "10.100.1.51:8080";
+        var host = _config?.Host ?? Request.Host.ToString();
 
         var profile = await _api.GetProfile(user);
         if (profile != default)
@@ -47,7 +49,7 @@ public class PayController : Controller
     [Route("lnurl/payRequest")]
     public IActionResult GetLNURLConfig([FromRoute] string user)
     {
-        var host = "10.100.1.51:8080";
+        var host = _config?.Host ?? Request.Host.ToString();
         var id = Guid.NewGuid();
 
         var metadata = new List<string[]>()
@@ -70,6 +72,6 @@ public class PayController : Controller
     [Route("lnurl/payRequest/invoice")]
     public IActionResult GetInvoice([FromRoute] string user, [FromQuery] Guid id, [FromQuery] string amount)
     {
-        return null;
+        return NoContent();
     }
 }
