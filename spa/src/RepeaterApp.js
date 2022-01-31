@@ -1,38 +1,35 @@
 import './App.css';
 import {useState} from "react";
+import {TipperWidget} from "./TipperWidget";
 
-function App() {
+export function RepeaterApp() {
     let [username, setUsername] = useState();
     let [config, setConfig] = useState();
-    
+
     function handleInput(e) {
         setUsername(e.target.value);
     }
-    
+
     async function handleSubmit(e){
-        let i = e.target.previousElementSibling;
-        let username = i.value;
-        
-        let cfg = await fetch(`/pay/${username}`);
-        if(cfg.ok) {
-            let data = await cfg.json();
-            console.debug(data);
-            setConfig(data);
-        }
+        setConfig(username);
     }
-    
+
     function renderConfig() {
         if(config) {
+            let url = `/#${username}`;
             return (
-              <div>
-                  <h3>Your QR</h3>
-                  <img width="320" src={`data:image/png;base64,${config.qr}`} alt="qr"/>
-                  <br/>
-                  <code>{config.url}</code>
-              </div>  
+                <div>
+                    <a href={url} target="_blank">Tipper Link</a>
+                    <iframe src={url} frameBorder={0}/>
+                </div>
             );
         }
         return null;
+    }
+
+    let frag = window.location.hash;
+    if(frag !== "") {
+        return <TipperWidget username={frag.substr(1)}/>;
     }
     
     return (
@@ -47,5 +44,3 @@ function App() {
         </div>
     );
 }
-
-export default App;

@@ -7,16 +7,18 @@ namespace StrikeTipWidget.Strike;
 
 public class PartnerApi
 {
+    private readonly ILogger<PartnerApi> _logger;
     private readonly HttpClient _client;
     private readonly PartnerApiSettings _settings;
 
-    public PartnerApi(PartnerApiSettings settings)
+    public PartnerApi(PartnerApiSettings settings, ILogger<PartnerApi> logger)
     {
         _client = new HttpClient
         {
             BaseAddress = settings.Uri ?? new Uri("https://api.strike.me/")
         };
         _settings = settings;
+        _logger = logger;
 
         _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {settings.ApiKey}");
     }
@@ -34,6 +36,11 @@ public class PartnerApi
         return SendRequest<Profile>(HttpMethod.Get, $"/v1/accounts/handle/{handle}/profile");
     }
     
+    public Task<Profile?> GetProfile(Guid id)
+    {
+        return SendRequest<Profile>(HttpMethod.Get, $"/v1/accounts/{id}/profile");
+    }
+    
     public Task<Invoice?> GetInvoice(Guid id)
     {
         return SendRequest<Invoice>(HttpMethod.Get, $"/v1/invoices/{id}");
@@ -42,6 +49,21 @@ public class PartnerApi
     public Task<InvoiceQuote?> GetInvoiceQuote(Guid id)
     {
         return SendRequest<InvoiceQuote>(HttpMethod.Post, $"/v1/invoices/{id}/quote");
+    }
+
+    public Task<IEnumerable<WebhookSubscription>?> GetWebhookSubscriptions()
+    {
+        return SendRequest<IEnumerable<WebhookSubscription>>(HttpMethod.Get, "/v1/subscriptions");
+    }
+
+    public Task<WebhookSubscription?> CreateWebhook(NewWebhook hook)
+    {
+        return SendRequest<WebhookSubscription>(HttpMethod.Post, "/v1/subscriptions", hook);
+    }
+
+    public Task DeleteWebhook(Guid id)
+    {
+        return SendRequest<object>(HttpMethod.Delete, $"/v1/subscriptions/{id}");
     }
     
     private async Task<TReturn?> SendRequest<TReturn>(HttpMethod method, string path, object? bodyObj = default)
@@ -62,6 +84,7 @@ public class PartnerApi
         };
 
         var json = await rsp.Content.ReadAsStringAsync();
+        _logger.LogInformation(json);
         return rsp.StatusCode == okResponse ? JsonConvert.DeserializeObject<TReturn>(json) : default;
     }
 }
@@ -69,10 +92,19 @@ public class PartnerApi
 public class Profile
 {
     [JsonProperty("handle")]
-    public string? Handle { get; init; }
+    public string Handle { get; init; } = null;
     
     [JsonProperty("avatarUrl")]
     public string? AvatarUrl { get; init; }
+    
+    [JsonProperty("description")]
+    public string? Description { get; init; }
+    
+    [JsonProperty("canReceive")]
+    public bool CanReceive { get; init; }
+    
+    [JsonProperty("currencies")]
+    public List<AvailableCurrency> Currencies { get; init; } = new();
 }
 
 public class InvoiceQuote
@@ -128,9 +160,16 @@ public class ErrorResponse : Exception
 
 public class CreateInvoiceRequest
 {
+    [JsonProperty("correlationId")]
     public string? CorrelationId { get; init; }
+    
+    [JsonProperty("description")]
     public string? Description { get; init; }
+    
+    [JsonProperty("amount")]
     public CurrencyAmount? Amount { get; init; }
+    
+    [JsonProperty("handle")]
     public string? Handle { get; init; }
 }
 
@@ -142,6 +181,18 @@ public class CurrencyAmount
     [JsonProperty("currency")]
     [JsonConverter(typeof(StringEnumConverter))]
     public Currencies? Currency { get; init; }
+}
+
+public class AvailableCurrency
+{
+    [JsonProperty("currency")]
+    public Currencies Currency { get; init; }
+    
+    [JsonProperty("isDefaultCurrency")]
+    public bool IsDefault { get; init; }
+    
+    [JsonProperty("isAvailable")]
+    public bool IsAvailable { get; init; }
 }
 
 public enum Currencies
@@ -175,13 +226,78 @@ public class Invoice
     public string? Description { get; init; }
     
     [JsonProperty("issuerId")]
-    public string? IssuerId { get; init; }
+    public Guid? IssuerId { get; init; }
     
     [JsonProperty("receiverId")]
-    public string? ReceiverId { get; init; }
+    public Guid? ReceiverId { get; init; }
     
     [JsonProperty("payerId")]
-    public string? PayerId { get; init; }
+    public Guid? PayerId { get; init; }
+}
+
+public abstract class WebhookBase
+{
+    [JsonProperty("webhookUrl")]
+    public Uri? Uri { get; init; }
+    
+    [JsonProperty("webhookVersion")]
+    public string? Version { get; init; }
+    
+    [JsonProperty("enabled")]
+    public bool? Enabled { get; init; }
+
+    [JsonProperty("eventTypes")]
+    public HashSet<string>? EventTypes { get; init; }
+}
+
+public sealed class NewWebhook : WebhookBase
+{
+    [JsonProperty("secret")]
+    public string? Secret { get; init; }
+}
+
+public sealed class WebhookSubscription : WebhookBase
+{
+    [JsonProperty("id")]
+    public Guid? Id { get; init; }
+    
+    [JsonProperty("created")]
+    public DateTimeOffset? Created { get; init; }
+}
+
+public class WebhookData
+{
+    [JsonProperty("entityId")]
+    public Guid? EntityId { get; set; }
+
+    [JsonProperty("changes")]
+    public List<string>? Changes { get; set; }
+}
+
+public class WebhookEvent
+{
+    [JsonProperty("id")]
+    public Guid? Id { get; set; }
+
+    [JsonProperty("eventType")]
+    public string? EventType { get; set; }
+
+    [JsonProperty("webhookVersion")]
+    public string? WebhookVersion { get; set; }
+
+    [JsonProperty("data")]
+    public WebhookData? Data { get; set; }
+
+    [JsonProperty("created")]
+    public DateTimeOffset? Created { get; set; }
+
+    [JsonProperty("deliverySuccess")]
+    public bool? DeliverySuccess { get; set; }
+
+    public override string ToString()
+    {
+        return $"Id = {Id}, EntityId = {Data?.EntityId}, Event = {EventType}";
+    }
 }
 
 public enum InvoiceState
@@ -195,5 +311,5 @@ public enum InvoiceState
 public class PartnerApiSettings
 {
     public Uri? Uri { get; init; }
-    public string ApiKey { get; init; }
+    public string? ApiKey { get; init; }
 }

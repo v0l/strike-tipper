@@ -1,0 +1,13 @@
+.widget {
+    width: 300px;
+}
+
+.widget svg, .widget canvas {
+    border-radius: 50px;
+}
+
+.widget .tip-history {
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+}

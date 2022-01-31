@@ -9,7 +9,7 @@ using StrikeTipWidget.Strike;
 
 namespace StrikeTipWidget.Controllers;
 
-[Route("pay/{user}")]
+[Route("lnurlpay/{user}")]
 public class PayController : Controller
 {
     private readonly PartnerApi _api;
@@ -29,7 +29,7 @@ public class PayController : Controller
         var profile = await _api.GetProfile(user);
         if (profile != default)
         {
-            var lnpayUri = new Uri(baseUrl, $"pay/{user}/lnurl/payRequest");
+            var lnpayUri = new Uri(baseUrl, $"lnurlpay/{user}/payRequest");
             var lnurl = LNURL.LNURL.EncodeBech32(lnpayUri).ToUpper();
 
             using var qrData = QRCoder.QRCodeGenerator.GenerateQrCode(
@@ -48,7 +48,7 @@ public class PayController : Controller
     }
 
     [HttpGet]
-    [Route("lnurl/payRequest")]
+    [Route("payRequest")]
     public IActionResult GetLNURLConfig([FromRoute] string user)
     {
         var baseUrl = _config?.BaseUrl ?? new Uri($"{Request.Scheme}://{Request.Host}");
@@ -61,7 +61,7 @@ public class PayController : Controller
         
         var req = new LNURLPayRequest()
         {
-            Callback = new Uri(baseUrl, $"pay/{user}/lnurl/payRequest/invoice?id={id}"),
+            Callback = new Uri(baseUrl, $"lnurlpay/{user}/payRequest/invoice?id={id}"),
             MaxSendable = 100_000_000,
             MinSendable = 100,
             Metadata = JsonConvert.SerializeObject(metadata),
@@ -72,11 +72,18 @@ public class PayController : Controller
     }
 
     [HttpGet]
-    [Route("lnurl/payRequest/invoice")]
+    [Route("payRequest/invoice")]
     public async Task<IActionResult> GetInvoice([FromRoute] string user, [FromQuery] Guid id, [FromQuery] long amount)
     {
         try
         {
+            var profile = await _api.GetProfile(user);
+            if (!(profile?.CanReceive ?? false) || 
+                profile.Currencies.Where(a => a.IsAvailable).All(a => a.Currency != Currencies.BTC))
+            {
+                throw new InvalidOperationException("Account cannot receive BTC");
+            }
+            
             var invoice = await _api.GenerateInvoice(new()
             {
                 Amount = new()
@@ -90,9 +97,9 @@ public class PayController : Controller
                 Description = "tip",
                 Handle = user
             });
-
+            if (invoice == null) throw new Exception("Failed to get invoice!");
+            
             var quote = await _api.GetInvoiceQuote(invoice.InvoiceId);
-
             var rsp = new LNURLPayRequest.LNURLPayRequestCallbackResponse()
             {
                 Pr = quote.LnInvoice
