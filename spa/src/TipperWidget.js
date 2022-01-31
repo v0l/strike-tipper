@@ -94,7 +94,7 @@ export function TipperWidget(props) {
     useEffect(() => {
         if(invoice) {
             let proto = window.location.protocol === "https:" ? "wss:" : "ws:";
-            let ws = new WebSocket(`${proto}//${window.location.hostname}:8080/events`);
+            let ws = new WebSocket(`${proto}//${window.location.host}/events`);
             ws.onopen = function (ev) {
                 console.log("Events websocket open!");
                 ws.send(JSON.stringify({
