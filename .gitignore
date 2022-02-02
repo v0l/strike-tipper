@@ -5,4 +5,5 @@ riderModule.iml
 /_ReSharper.Caches/
 .idea/
 .DS_Store
+.vs/
 appsettings.Development.json

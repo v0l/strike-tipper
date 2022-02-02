@@ -31,29 +31,6 @@ public class WebsocketHandler : IDisposable
         _broker.Handlehook += OnWebhook;
         _ = ReadTask();
         _ = WriteTask();
-        
-        Task.Run(async () =>
-        {
-            while (!_cts.IsCancellationRequested)
-            {
-                if (_deliveries.Count > 0)
-                {
-                    _eventQueue.Post(new()
-                    {
-                        Created = DateTimeOffset.UtcNow,
-                        Data = new()
-                        {
-                            Changes = new() {"state"},
-                            EntityId = _deliveries.First()
-                        },
-                        DeliverySuccess = true,
-                        EventType = "invoice.updated",
-                        Id = Guid.NewGuid()
-                    });
-                }
-                await Task.Delay(10000, _cts.Token);
-            }
-        });
     }
 
     public Task WaitForExit => _tcs.Task;

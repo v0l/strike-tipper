@@ -1,18 +1,16 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import './index.css';
-import { LNURLApp } from './LNURLApp';
+import { Provider } from 'react-redux';
 import { RepeaterApp } from "./RepeaterApp";
-import reportWebVitals from './reportWebVitals';
+import store from "./Store";
+
+import './index.css';
 
 ReactDOM.render(
-  <React.StrictMode>
-    <RepeaterApp />
-  </React.StrictMode>,
-  document.getElementById('root')
+    <React.StrictMode>
+        <Provider store={store}>
+            <RepeaterApp />
+        </Provider>
+    </React.StrictMode>,
+    document.getElementById('root')
 );
-
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
