@@ -34,13 +34,18 @@ var app = builder.Build();
 app.Use(async (context, next) =>
 {
     var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+    var headers = context.Request.Headers
+        .Where(a => !a.Key.Equals("cookie", StringComparison.InvariantCultureIgnoreCase))
+        .GroupBy(a => a.Key)
+        .ToDictionary(a => a.Key, b => b.Select(c => c.Value.First()));
+    logger.LogDebug("Handeling request {path} {headers}", context.Request.Path, headers);
+
     try
     {
         await next();
     }
     catch (Exception ex)
     {
-        var headers = context.Request.Headers.Select(a => $"{a.Key}: {a.Value}");
         logger.LogError("Error handeling request {path} {exception} {headers}", context.Request.Path, ex, headers);
     }
 });
