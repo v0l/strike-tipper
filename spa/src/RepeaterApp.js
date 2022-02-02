@@ -20,7 +20,6 @@ export function RepeaterApp() {
             return (
                 <div>
                     <a href={url} target="_blank">Tipper Link</a>
-                    <iframe src={url} frameBorder={0}/>
                 </div>
             );
         }

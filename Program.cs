@@ -31,6 +31,18 @@ services.AddRouting();
 
 var app = builder.Build();
 
+app.Use(async (context, next) =>
+{
+    var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+    try
+    {
+        await next();
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, ex.Message);
+    }
+});
 app.UseWebSockets();
 app.Use(async (context, next) =>
 {
@@ -50,7 +62,7 @@ app.Use(async (context, next) =>
         }
         else
         {
-            context.Response.StatusCode = (int) HttpStatusCode.UpgradeRequired;
+            context.Response.StatusCode = (int)HttpStatusCode.UpgradeRequired;
         }
     }
     else
