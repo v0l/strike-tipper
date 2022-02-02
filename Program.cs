@@ -40,7 +40,8 @@ app.Use(async (context, next) =>
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, ex.Message);
+        var headers = context.Request.Headers.Select(a => $"{a.Key}: {a.Value}");
+        logger.LogError("Error handeling request {path} {exception} {headers}", context.Request.Path, ex, headers);
     }
 });
 app.UseWebSockets();
