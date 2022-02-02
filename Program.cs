@@ -14,6 +14,9 @@ services.AddSingleton(strikeApiConfig);
 var mainConfig = configuration.GetSection("Tipper").Get<TipperConfig>();
 services.AddSingleton(mainConfig);
 
+var seqSettings = configuration.GetSection("Seq");
+builder.Logging.AddSeq(seqSettings);
+
 services.AddTransient<PartnerApi>();
 services.AddHostedService<WebhookSetupService>();
 services.AddSingleton<Broker>();
