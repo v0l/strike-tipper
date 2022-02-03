@@ -21,16 +21,26 @@ services.AddTransient<PartnerApi>();
 services.AddHostedService<WebhookSetupService>();
 services.AddSingleton<Broker>();
 
-services.AddWebSockets(options =>
-{
-    options.AllowedOrigins.Add("https://localhost:3000");
-    options.AllowedOrigins.Add(mainConfig.BaseUrl!.ToString());
-});
+services.AddCors();
 services.AddControllers().AddNewtonsoftJson();
 services.AddRouting();
 
 var app = builder.Build();
 
+app.UseCors(options =>
+{
+    if (mainConfig.BaseUrl != default)
+    {
+        options.WithOrigins(mainConfig.BaseUrl.ToString());
+    }
+    else
+    {
+        options.AllowAnyOrigin();
+    }
+    options.AllowAnyHeader();
+    options.AllowAnyMethod();
+    options.AllowCredentials();
+});
 app.Use(async (context, next) =>
 {
     var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
@@ -49,6 +59,7 @@ app.Use(async (context, next) =>
         logger.LogError("Error handeling request {path} {exception} {headers}", context.Request.Path, ex, headers);
     }
 });
+
 app.UseWebSockets();
 app.Use(async (context, next) =>
 {
