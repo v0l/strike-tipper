@@ -1,4 +1,4 @@
-import { createRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { setInvoice, addPaymentHistory } from "./WidgetState";
 import { Events } from "./Events";
@@ -7,6 +7,7 @@ import QRCodeStyling from "qr-code-styling";
 
 import "./TipperWidget.css";
 import StrikeLogo from "./strike.svg";
+import Coins from "./coins.mp3";
 
 export function TipperWidget(props) {
     const dispatch = useDispatch();
@@ -15,8 +16,8 @@ export function TipperWidget(props) {
     let paymentHistory = useSelector((state) => state.widget.paymentHistory);
 
     let [loadingInvoice, setLoadingInvoice] = useState(false);
-    let [ws, setWs] = useState();
-    let qrRef = createRef();
+    const qrRef = useRef();
+    const fxRef = useRef();
 
     async function loadInvoice(id) {
         setLoadingInvoice(true);
@@ -31,10 +32,10 @@ export function TipperWidget(props) {
         setLoadingInvoice(true);
         let body = {
             handle,
-            description: "stream tip",
+            description: props.description,
             amount: {
                 currency: "USD",
-                amount: 1.0
+                amount: props.amount
             }
         };
         
@@ -55,7 +56,15 @@ export function TipperWidget(props) {
         if (ev.type === "InvoicePaid") {
             dispatch(addPaymentHistory(ev.data));
             getNewInvoice(props.username);
+
+            fxRef.current?.play();
         }
+    }
+
+    function audioFix(e) {
+        fxRef.current.muted = false;
+        fxRef.current.play();
+        e.target.style.display = "none";
     }
     
     function renderPayLog(l) {
@@ -83,7 +92,7 @@ export function TipperWidget(props) {
                 height: 600,
                 data: `lightning:${invoice.quote.lnInvoice}`,
                 image: StrikeLogo,
-                margin: 0,
+                margin: 5,
                 type: 'canvas',
                 imageOptions: {
                     hideBackgroundDots: false
@@ -106,7 +115,9 @@ export function TipperWidget(props) {
         
     useEffect(() => {
         getNewInvoice(props.username);
-        Events.HookEvent("WidgetEvent", (d) => handleWidgetEvent(d.data));
+        Events.HookEvent("WidgetEvent", function (d) {
+            handleWidgetEvent(d.data);
+        }.bind(this));
     }, []);
     
     return (
@@ -119,6 +130,8 @@ export function TipperWidget(props) {
                     return bd - ad;
                 }).map(a => renderPayLog(a))}
             </div>
+            <input type="button" onClick={audioFix} value="Click me"/>
+            <audio src={Coins} autoPlay={true} muted={true} ref={fxRef}/>
         </div>
     );
 }

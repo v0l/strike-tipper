@@ -1,5 +1,5 @@
 .widget {
-    width: 300px;
+    width: 600px;
 }
 
 .widget svg, .widget canvas {
@@ -10,12 +10,12 @@
 
 .widget .tip-history {
     text-align: center;
-    font-size: 16px;
+    font-size: 32px;
     font-weight: bold;
 }
 
     .widget .tip-history .tip-msg small {
-        font-size: 12px;
+        font-size: 20px;
         font-weight: normal;
     }
 

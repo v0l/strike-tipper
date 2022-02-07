@@ -12,7 +12,10 @@ export class WebsocketEvents {
 
         this.ws.onopen = function (ev) {
             console.log("Events websocket open!");
-        }
+            if (this.ids.size > 0) {
+                this.SendCommand("listen", [...this.ids]);
+            }
+        }.bind(this)
         this.ws.onclose = function (ev) {
             console.log(ev);
         }
