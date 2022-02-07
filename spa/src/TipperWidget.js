@@ -60,12 +60,6 @@ export function TipperWidget(props) {
             fxRef.current?.play();
         }
     }
-
-    function audioFix(e) {
-        fxRef.current.muted = false;
-        fxRef.current.play();
-        e.target.style.display = "none";
-    }
     
     function renderPayLog(l) {
         let pd = new Date(l.paid);
@@ -130,8 +124,7 @@ export function TipperWidget(props) {
                     return bd - ad;
                 }).map(a => renderPayLog(a))}
             </div>
-            <input type="button" onClick={audioFix} value="Click me"/>
-            <audio src={Coins} autoPlay={true} muted={true} ref={fxRef}/>
+            <audio src={Coins} autoPlay={true} ref={fxRef}/>
         </div>
     );
 }

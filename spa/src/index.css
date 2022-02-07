@@ -5,7 +5,7 @@ body {
   font-family: 'Montserrat', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: black;
+  background-color: rgba(0,0,0,1);
   color: white;
 }
 
@@ -20,4 +20,12 @@ input[type="text"], input[type="number"] {
     font-size: 16px;
     border: 0;
     margin-bottom: 10px;
+}
+
+.widget-link {
+    display: block;
+    margin-top: 20px;
+    color: yellow;
+    font-size: 28px;
+    text-transform: uppercase;
 }

@@ -1,4 +1,4 @@
-import './App.css';
+﻿import './App.css';
 import {useState} from "react";
 import {TipperWidget} from "./TipperWidget";
 
@@ -19,7 +19,26 @@ export function RepeaterApp() {
             let url = `/#${btoa(JSON.stringify(config))}`;
             return (
                 <div>
-                    <a href={url} target="_blank">Tipper Link</a>
+                    <br/>
+                    <h3>Add the following link as a 'Browser Source' in OBS:</h3>
+                    <a href={url} target="_blank" className="widget-link">COPY ME</a>
+                    <br />
+                    <h3>Help</h3>
+                    <p>
+                        The tip widget uses a resolution of 600x700, you should set this as the resolution of the browser in OBS.
+                    </p>
+                    <p>
+                        The tip widget will work in any alternatives to OBS as long as you can use a web page as a 'Layer'.
+                    </p>
+                    <p>
+                        The amount is fixed and will allow people to tip ONLY the amount you specify above.
+                    </p>
+                    <p>
+                        Works with any lightning wallet supporting BOLT11 invoices. ⚡
+                    </p>
+                    <p>
+                        If the widget doesn't load, please check the username is correct.
+                    </p>
                 </div>
             );
         }
