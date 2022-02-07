@@ -81,10 +81,11 @@ export function TipperWidget(props) {
             }, diff);
             console.log(`Set timout for: ${diff}ms`);
 
+            let link = `lightning:${invoice.quote.lnInvoice}`;
             var qr = new QRCodeStyling({
                 width: 600,
                 height: 600,
-                data: `lightning:${invoice.quote.lnInvoice}`,
+                data: link,
                 image: StrikeLogo,
                 margin: 5,
                 type: 'canvas',
@@ -100,6 +101,11 @@ export function TipperWidget(props) {
             });
             qrRef.current.innerHTML = "";
             qr.append(qrRef.current);
+            qrRef.current.onclick = function (e) {
+                let elm = document.createElement("a");
+                elm.href = link;
+                elm.click();
+            }
 
             setLoadingInvoice(false);
             Events.AddListenId(id)
