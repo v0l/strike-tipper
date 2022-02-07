@@ -34,7 +34,7 @@ export function TipperWidget(props) {
             handle,
             description: props.description,
             amount: {
-                currency: "USD",
+                currency: props.currency,
                 amount: props.amount
             }
         };

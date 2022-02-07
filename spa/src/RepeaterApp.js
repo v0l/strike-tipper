@@ -3,14 +3,15 @@ import {useState} from "react";
 import {TipperWidget} from "./TipperWidget";
 
 export function RepeaterApp() {
-    let [username, setUsername] = useState();
-    let [amount, setAmount] = useState(1);
-    let [description, setDescription] = useState("Stream tip");
-    let [config, setConfig] = useState();
+    const [username, setUsername] = useState();
+    const [amount, setAmount] = useState(1);
+    const [description, setDescription] = useState("Stream tip");
+    const [currency, setCurrency] = useState("USD");
+    const [config, setConfig] = useState();
 
     async function handleSubmit(e){
         setConfig({
-            username, amount, description
+            username, currency, amount, description
         });
     }
 
@@ -58,9 +59,18 @@ export function RepeaterApp() {
                 <dd>Strike username:</dd>
                 <dt><input type="text" placeholder="Username" onInput={(e) => setUsername(e.target.value)} value={username} /></dt>
             
-                <dd>Tip amount (USD):</dd>
+                <dd>Tip amount:</dd>
                 <dt><input type="number" placeholder="Amount" onInput={(e) => setAmount(e.target.value)} value={amount} /></dt>
-            
+
+                <dd>Currency:</dd>
+                <dt>
+                    <select onChange={(e) => setCurrency(e.target.value)}>
+                        <option>USD</option>
+                        <option>USDT</option>
+                        <option>EUR</option>
+                    </select>
+                </dt>
+
                 <dd>Description:</dd>
                 <dt><input type="text" placeholder="Description" onInput={(e) => setDescription(e.target.value)} value={description} /></dt>
             </dl>
