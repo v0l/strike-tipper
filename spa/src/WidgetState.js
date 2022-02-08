@@ -1,5 +1,31 @@
 ﻿import { createSlice } from '@reduxjs/toolkit'
 
+const ExampleTips = [
+    {
+        from: "jack",
+        paid: new Date(),
+        amount: 1000,
+        currency: "USD"
+    },
+    {
+        from: "hrf",
+        paid: new Date(),
+        amount: 10000,
+        currency: "EUR"
+    },
+    {
+        from: "kieran",
+        paid: new Date(),
+        amount: 10.20,
+        currency: "GBP"
+    },
+    {
+        paid: new Date(),
+        amount: 420.69,
+        currency: "USDT"
+    }
+];
+
 export const widgetSlice = createSlice({
     name: 'widget',
     initialState: {

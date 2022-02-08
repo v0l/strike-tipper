@@ -29,3 +29,7 @@ input[type="text"], input[type="number"], select {
     font-size: 28px;
     text-transform: uppercase;
 }
+
+.strike-yellow {
+    color: rgb(204, 255, 0);
+}

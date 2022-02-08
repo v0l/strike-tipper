@@ -8,6 +8,7 @@ import QRCodeStyling from "qr-code-styling";
 import "./TipperWidget.css";
 import StrikeLogo from "./strike.svg";
 import Coins from "./coins.mp3";
+import { TimeAgo } from "./TimeAgo";
 
 export function TipperWidget(props) {
     const dispatch = useDispatch();
@@ -62,10 +63,15 @@ export function TipperWidget(props) {
     }
     
     function renderPayLog(l) {
-        let pd = new Date(l.paid);
+        let style = {
+            style: "currency",
+            currency: l.currency === "USDT" ? "USD" : l.currency,
+            minimumFractionDigits: 2
+        };
         return (
             <div className="tip-msg" key={l.paid}>
-                <small>{pd.getHours()}:{pd.getMinutes().toFixed(0).padStart(2, '0')}</small>{l.from ?? "⚡"} tipped {l.currency} {l.amount.toLocaleString()}
+                <TimeAgo from={l.paid} />
+                <div><span className="strike-yellow">{l.from ?? "⚡"}</span> tipped {l.amount.toLocaleString(undefined, style)}</div>
             </div>
         )
     };
