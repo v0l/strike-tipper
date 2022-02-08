@@ -50,6 +50,16 @@ public class WebhookSetupService : BackgroundService
             _logger.LogInformation("Found hook: Id={id}, Create={created}", hook.Id, hook.Created);
         }
 
+        var deleteHooks = hooks?.Where(a => a.Uri != hookUrl);
+        foreach(var delHook in deleteHooks ?? Enumerable.Empty<WebhookSubscription>())
+        {
+            if (delHook?.Id != default)
+            {
+                await _api.DeleteWebhook(delHook!.Id!.Value);
+                _logger.LogInformation("Deleted invalid hook: Id={id}, Url={url}", delHook!.Id, delHook!.Uri);
+            }
+        }
+
         var tcs = new TaskCompletionSource();
         stoppingToken.Register(() => tcs.SetResult());
 

@@ -1,7 +1,6 @@
-using System.Net;
-using Microsoft.AspNetCore.WebSockets;
 using StrikeTipWidget;
 using StrikeTipWidget.Strike;
+using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,9 +28,9 @@ var app = builder.Build();
 
 app.UseCors(options =>
 {
-    if (mainConfig.BaseUrl != default)
+    if (mainConfig.CORSOrigins != default)
     {
-        options.WithOrigins(mainConfig.BaseUrl.ToString());
+        options.WithOrigins(mainConfig.CORSOrigins.Select(a => a.ToString()).ToArray());
     }
     else
     {
