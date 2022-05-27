@@ -1,3 +1,4 @@
+using System.Net;
 using Microsoft.AspNetCore.Mvc;
 using StrikeTipWidget.Strike;
 
@@ -31,10 +32,18 @@ public class RepeaterInvoiceController : Controller
     public async Task<InvoiceAndQuote?> GetInvoice([FromRoute]Guid invoice)
     {
         var inv = await _api.GetInvoice(invoice);
-        if (inv == default) return null;
+        if (inv == default)
+        {
+            Response.StatusCode = (int)HttpStatusCode.NotFound;
+            return null;
+        }
         
         var quote = await _api.GetInvoiceQuote(invoice);
-        if (quote == null) return null;
+        if (quote == default)
+        {
+            Response.StatusCode = (int)HttpStatusCode.NotFound;
+            return null;
+        }
 
         return new(inv, quote);
     }

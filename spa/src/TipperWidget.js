@@ -1,14 +1,14 @@
-import { useRef, useEffect, useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { setInvoice, addPaymentHistory } from "./WidgetState";
-import { Events } from "./Events";
+import {useRef, useEffect, useState} from "react";
+import {useSelector, useDispatch} from "react-redux";
+import {setInvoice, addPaymentHistory} from "./WidgetState";
+import {Events} from "./Events";
 
 import QRCodeStyling from "qr-code-styling";
 
 import "./TipperWidget.css";
 import StrikeLogo from "./strike.svg";
 import Coins from "./coins.mp3";
-import { TimeAgo } from "./TimeAgo";
+import {TimeAgo} from "./TimeAgo";
 
 export function TipperWidget(props) {
     const dispatch = useDispatch();
@@ -22,13 +22,19 @@ export function TipperWidget(props) {
 
     async function loadInvoice(id) {
         setLoadingInvoice(true);
-        let req = await fetch(`/invoice/${id}`);
-        if(req.ok) {
-            let inv = await req.json();
-            dispatch(setInvoice(inv));
+        try {
+            let req = await fetch(`/invoice/${id}`);
+            if (req.ok) {
+                let inv = await req.json();
+                dispatch(setInvoice(inv));
+            } else if (req.status === 404) {
+                await getNewInvoice();
+            }
+        } catch (e) {
+            console.error(e);
         }
     }
-    
+
     async function getNewInvoice(handle) {
         setLoadingInvoice(true);
         let body = {
@@ -39,7 +45,7 @@ export function TipperWidget(props) {
                 amount: props.amount
             }
         };
-        
+
         let req = await fetch(`/invoice/new`, {
             method: "POST",
             body: JSON.stringify(body),
@@ -47,12 +53,12 @@ export function TipperWidget(props) {
                 "content-type": "application/json"
             }
         });
-        if(req.ok) {
+        if (req.ok) {
             let inv = await req.json();
             dispatch(setInvoice(inv));
         }
     }
-    
+
     function handleWidgetEvent(ev) {
         if (ev.type === "InvoicePaid") {
             dispatch(addPaymentHistory(ev.data));
@@ -61,7 +67,7 @@ export function TipperWidget(props) {
             fxRef.current?.play();
         }
     }
-    
+
     function renderPayLog(l) {
         let style = {
             style: "currency",
@@ -70,8 +76,10 @@ export function TipperWidget(props) {
         };
         return (
             <div className="tip-msg" key={l.paid}>
-                <TimeAgo from={l.paid} />
-                <div><span className="strike-yellow">{l.from ?? "⚡"}</span> tipped {l.amount.toLocaleString(undefined, style)}</div>
+                <TimeAgo from={l.paid}/>
+                <div><span
+                    className="strike-yellow">{l.from ?? "⚡"}</span> tipped {l.amount.toLocaleString(undefined, style)}
+                </div>
             </div>
         )
     };
@@ -118,14 +126,14 @@ export function TipperWidget(props) {
             return () => clearInterval(t);
         }
     }, [invoice]);
-        
+
     useEffect(() => {
         getNewInvoice(props.username);
         Events.HookEvent("WidgetEvent", function (d) {
             handleWidgetEvent(d.data);
         }.bind(this));
     }, []);
-    
+
     return (
         <div className="widget">
             {invoice ? <div ref={qrRef} className={loadingInvoice ? "qr-loading" : ""}></div> : <b>Loading...</b>}
