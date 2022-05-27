@@ -1,4 +1,4 @@
-﻿import { v4 as uuidv4 } from "uuid";
+﻿import {v4 as uuidv4} from "uuid";
 
 export class WebsocketEvents {
     constructor() {
@@ -6,22 +6,26 @@ export class WebsocketEvents {
         this.handlers = {
             WidgetEvent: {}
         };
+        this.Connect();
+    }
 
+    Connect() {
         let proto = window.location.protocol === "https:" ? "wss:" : "ws:";
         this.ws = new WebSocket(`${proto}//${window.location.host}/events`);
 
-        this.ws.onopen = function (ev) {
+        this.ws.onopen = (ev) => {
             console.log("Events websocket open!");
             if (this.ids.size > 0) {
                 this.SendCommand("listen", [...this.ids]);
             }
-        }.bind(this)
-        this.ws.onclose = function (ev) {
+        };
+        this.ws.onclose = (ev) => {
             console.log(ev);
-        }
-        this.ws.onerror = function (ev) {
+            setTimeout(() => this.Connect(), 500);
+        };
+        this.ws.onerror = (ev) => {
             console.log(ev);
-        }
+        };
         this.ws.onmessage = this.handleMessage.bind(this);
     }
 
@@ -32,7 +36,7 @@ export class WebsocketEvents {
         for (let [type, hooks] of Object.entries(this.handlers)) {
             if (type !== msg.type) continue;
 
-            for (let [id, fn] of Object.entries(hooks)) {
+            for (let [_, fn] of Object.entries(hooks)) {
                 fn(msg);
             }
         }
@@ -62,6 +66,6 @@ export class WebsocketEvents {
     RemoveEvent(type, id) {
         delete this.handlers[type][id];
     }
-};
+}
 
 export const Events = new WebsocketEvents();
