@@ -35,10 +35,10 @@ export function TipperWidget(props) {
         }
     }
 
-    async function getNewInvoice(handle) {
+    async function getNewInvoice() {
         setLoadingInvoice(true);
         let body = {
-            handle,
+            handle: props.username,
             description: props.description,
             amount: {
                 currency: props.currency,
@@ -62,7 +62,7 @@ export function TipperWidget(props) {
     function handleWidgetEvent(ev) {
         if (ev.type === "InvoicePaid") {
             dispatch(addPaymentHistory(ev.data));
-            getNewInvoice(props.username);
+            getNewInvoice();
 
             fxRef.current?.play();
         }
@@ -128,7 +128,7 @@ export function TipperWidget(props) {
     }, [invoice]);
 
     useEffect(() => {
-        getNewInvoice(props.username);
+        getNewInvoice();
         Events.HookEvent("WidgetEvent", function (d) {
             handleWidgetEvent(d.data);
         }.bind(this));
