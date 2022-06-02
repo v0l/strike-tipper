@@ -55,7 +55,9 @@ export function TipperWidget(props) {
         });
         if (req.ok) {
             let inv = await req.json();
-            Events.RemoveListenId(invoice.invoice.invoiceId);
+            if(invoice) {
+                Events.RemoveListenId(invoice.invoice.invoiceId);
+            }
             dispatch(setInvoice(inv));
         }
     }
