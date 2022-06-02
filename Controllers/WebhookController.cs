@@ -28,7 +28,7 @@ public class WebhookController : Controller
 
         _logger.LogInformation("Got webhook event: {event}", json);
         
-        var key = Encoding.UTF8.GetBytes(_config.WebhookSecret);
+        var key = Encoding.UTF8.GetBytes(_config.WebhookSecret!);
         var hmac = HMACSHA256.HashData(key, Encoding.UTF8.GetBytes(json));
 
         var hmacCaller = Request.Headers["X-Webhook-Signature"][0];

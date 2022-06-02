@@ -57,6 +57,13 @@ export class WebsocketEvents {
         }
     }
 
+    RemoveListenId(id) {
+        if (this.ids.has(id)) {
+            this.ids.delete(id);
+            this.SendCommand("unlisten", [id]);
+        }
+    }
+
     HookEvent(type, handler) {
         let id = uuidv4();
         this.handlers[type][id] = handler;

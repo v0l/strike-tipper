@@ -18,8 +18,9 @@ public class WebsocketHandler : IDisposable
     private readonly BufferBlock<WebhookEvent> _eventQueue = new();
     private readonly CancellationTokenSource _cts = new();
     private readonly TaskCompletionSource _tcs = new();
-    
-    public WebsocketHandler(WebSocket ws, CancellationToken token, Broker broker, ILogger<WebsocketHandler> logger, PartnerApi api)
+
+    public WebsocketHandler(WebSocket ws, CancellationToken token, Broker broker, ILogger<WebsocketHandler> logger,
+        PartnerApi api)
     {
         _ws = ws;
         _broker = broker;
@@ -34,7 +35,7 @@ public class WebsocketHandler : IDisposable
     }
 
     public Task WaitForExit => _tcs.Task;
-    
+
     private async Task WriteTask()
     {
         while (!_cts.IsCancellationRequested)
@@ -51,7 +52,7 @@ public class WebsocketHandler : IDisposable
             string? from = null;
             var inv = await _api.GetInvoice(ev.Data.EntityId!.Value);
             //if (inv is not {State: InvoiceState.PAID}) return;
-            
+
             if (inv.PayerId != default)
             {
                 var profile = await _api.GetProfile(inv.PayerId.Value);
@@ -64,7 +65,8 @@ public class WebsocketHandler : IDisposable
             var widgetEvent = new WidgetEvent()
             {
                 Type = WidgetEvents.InvoicePaid,
-                Data = new WidgetPaidEvent() {
+                Data = new WidgetPaidEvent()
+                {
                     Amount = decimal.Parse(inv?.Amount?.Amount ?? "0"),
                     Currency = inv?.Amount?.Currency.ToString() ?? "USD",
                     From = from,
@@ -79,12 +81,12 @@ public class WebsocketHandler : IDisposable
             });
         }
     }
-    
+
     private async Task ReadTask()
     {
         var readOffset = 0;
         using var mem = MemoryPool<byte>.Shared.Rent();
-        
+
         while (!_cts.IsCancellationRequested)
         {
             var read = await _ws.ReceiveAsync(mem.Memory[readOffset..], _cts.Token);
@@ -127,40 +129,46 @@ public class WebsocketHandler : IDisposable
         var json = JsonConvert.SerializeObject(val);
         return _ws.SendAsync(Encoding.UTF8.GetBytes(json), WebSocketMessageType.Text, true, _cts.Token);
     }
-    
+
     private async Task<ClientResponse?> HandleCommand(ClientCommand msg)
     {
         switch (msg.Command)
         {
-            case "listen" when msg.Args.Length == 1:
+            case "listen" when msg.Args.Length > 0:
             {
-                if (Guid.TryParse(msg.Args[0], out var g0))
+                foreach (var id in msg.Args)
                 {
-                    _deliveries.Add(g0);
-                    return new()
+                    if (Guid.TryParse(id, out var g0))
                     {
-                        Type = ClientResponseTypes.CommandResponse
-                    };
+                        _deliveries.Add(g0);
+                    }
                 }
-                break;
+
+                return new()
+                {
+                    Type = ClientResponseTypes.CommandResponse
+                };
             }
-            case "unlisten" when msg.Args.Length == 1:
+            case "unlisten" when msg.Args.Length > 0:
             {
-                if (Guid.TryParse(msg.Args[0], out var g0))
+                foreach (var id in msg.Args)
                 {
-                    _deliveries.Remove(g0);
-                    return new()
+                    if (Guid.TryParse(id, out var g0))
                     {
-                        Type = ClientResponseTypes.CommandResponse
-                    };
+                        _deliveries.Remove(g0);
+                    }
                 }
-                break;
+
+                return new()
+                {
+                    Type = ClientResponseTypes.CommandResponse
+                };
             }
         }
 
         return null;
     }
-    
+
     private Task OnWebhook(WebhookEvent hookEvent)
     {
         if (hookEvent.Data?.EntityId != null)
@@ -184,7 +192,7 @@ public sealed record ClientCommand
 {
     [JsonProperty("cmd")]
     public string Command { get; init; }
-    
+
     [JsonProperty("args")]
     public string[] Args { get; init; }
 }
@@ -194,7 +202,7 @@ public sealed record ClientResponse
     [JsonProperty("type")]
     [JsonConverter(typeof(StringEnumConverter))]
     public ClientResponseTypes Type { get; init; }
-    
+
     [JsonProperty("data")]
     public object? Data { get; init; }
 }
@@ -218,7 +226,7 @@ public sealed record WidgetEvent
     [JsonConverter(typeof(StringEnumConverter))]
     [JsonProperty("type")]
     public WidgetEvents Type { get; init; }
-    
+
     [JsonProperty("data")]
     public object? Data { get; init; }
 }
@@ -227,13 +235,13 @@ public sealed record WidgetPaidEvent
 {
     [JsonProperty("amount")]
     public decimal Amount { get; init; }
-    
+
     [JsonProperty("currency")]
     public string? Currency { get; init; }
-        
+
     [JsonProperty("from")]
     public string? From { get; init; }
-        
+
     [JsonProperty("paid")]
     public DateTimeOffset Paid { get; init; }
 }
