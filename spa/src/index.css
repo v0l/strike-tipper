@@ -22,6 +22,12 @@ input[type="text"], input[type="number"], select {
     margin-bottom: 10px;
 }
 
+input[type="checkbox"] {
+    width: 30px;
+    height: 30px;
+    margin-bottom: 10px;
+}
+
 .widget-link {
     display: block;
     margin-top: 20px;

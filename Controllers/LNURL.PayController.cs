@@ -1,10 +1,8 @@
 using System.Globalization;
-using System.Text;
 using BTCPayServer.Lightning;
 using LNURL;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using QRCoder;
 using StrikeTipWidget.Strike;
 
 namespace StrikeTipWidget.Controllers;
@@ -22,7 +20,7 @@ public class PayController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetPayConfig([FromRoute]string user)
+    public async Task<IActionResult> GetPayConfig([FromRoute] string user)
     {
         var baseUrl = _config?.BaseUrl ?? new Uri($"{Request.Scheme}://{Request.Host}");
 
@@ -32,14 +30,9 @@ public class PayController : Controller
             var lnpayUri = new Uri(baseUrl, $"lnurlpay/{user}/payRequest");
             var lnurl = LNURL.LNURL.EncodeBech32(lnpayUri).ToUpper();
 
-            using var qrData = QRCoder.QRCodeGenerator.GenerateQrCode(
-                Encoding.UTF8.GetBytes(lnurl),
-                QRCodeGenerator.ECCLevel.M);
-            using var qrCode = new QRCoder.PngByteQRCode(qrData);
             return new JsonResult(new
             {
                 url = lnurl,
-                qr = qrCode.GetGraphic(20),
                 profile
             });
         }
@@ -49,21 +42,22 @@ public class PayController : Controller
 
     [HttpGet]
     [Route("payRequest")]
-    public IActionResult GetLNURLConfig([FromRoute] string user)
+    public IActionResult GetLNURLConfig([FromRoute] string user, [FromQuery] string description,
+        [FromQuery] ulong? amount = null)
     {
         var baseUrl = _config?.BaseUrl ?? new Uri($"{Request.Scheme}://{Request.Host}");
         var id = Guid.NewGuid();
 
         var metadata = new List<string[]>()
         {
-            new[] {"text/plain", "tip"}
+            new[] {"text/plain", description}
         };
-        
+
         var req = new LNURLPayRequest()
         {
             Callback = new Uri(baseUrl, $"lnurlpay/{user}/payRequest/invoice?id={id}"),
-            MaxSendable = 100_000_000,
-            MinSendable = 100,
+            MaxSendable = amount ?? 100_000_000,
+            MinSendable = amount ?? 100,
             Metadata = JsonConvert.SerializeObject(metadata),
             Tag = "payRequest"
         };
@@ -78,12 +72,12 @@ public class PayController : Controller
         try
         {
             var profile = await _api.GetProfile(user);
-            if (!(profile?.CanReceive ?? false) || 
+            if (!(profile?.CanReceive ?? false) ||
                 profile.Currencies.Where(a => a.IsAvailable).All(a => a.Currency != Currencies.BTC))
             {
                 throw new InvalidOperationException("Account cannot receive BTC");
             }
-            
+
             var invoice = await _api.GenerateInvoice(new()
             {
                 Amount = new()
@@ -98,7 +92,7 @@ public class PayController : Controller
                 Handle = user
             });
             if (invoice == null) throw new Exception("Failed to get invoice!");
-            
+
             var quote = await _api.GetInvoiceQuote(invoice.InvoiceId);
             var rsp = new LNURLPayRequest.LNURLPayRequestCallbackResponse()
             {

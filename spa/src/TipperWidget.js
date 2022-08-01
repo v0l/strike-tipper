@@ -3,12 +3,10 @@ import {useSelector, useDispatch} from "react-redux";
 import {setInvoice, addPaymentHistory} from "./WidgetState";
 import {Events} from "./Events";
 
-import QRCodeStyling from "qr-code-styling";
-
 import "./TipperWidget.css";
-import StrikeLogo from "./strike.svg";
 import Coins from "./coins.mp3";
 import {TimeAgo} from "./TimeAgo";
+import TipperQR from "./TipperQR";
 
 export function TipperWidget(props) {
     const dispatch = useDispatch();
@@ -16,8 +14,8 @@ export function TipperWidget(props) {
     let invoice = useSelector((state) => state.widget.invoice);
     let paymentHistory = useSelector((state) => state.widget.paymentHistory);
 
+    const [qrLink, setQrLink] = useState();
     let [loadingInvoice, setLoadingInvoice] = useState(false);
-    const qrRef = useRef();
     const fxRef = useRef();
 
     async function loadInvoice(id) {
@@ -37,6 +35,27 @@ export function TipperWidget(props) {
 
     async function getNewInvoice() {
         setLoadingInvoice(true);
+        if(props.useLnurl) {
+            await getLNURLConfig();
+        } else {
+            await getRepeaterInvoice();
+        }
+    }
+    
+    async function getLNURLConfig() {
+        let req = await fetch(`/lnurlpay/${props.username}?description=${props.description}`, {
+            headers: {
+                "content-type": "application/json"
+            }
+        });
+        if (req.ok) {
+            let inv = await req.json();
+            setQrLink(`lightning:${inv.url}`);
+            setLoadingInvoice(false);
+        }
+    }
+    
+    async function getRepeaterInvoice(){
         let body = {
             handle: props.username,
             description: props.description,
@@ -55,7 +74,7 @@ export function TipperWidget(props) {
         });
         if (req.ok) {
             let inv = await req.json();
-            if(invoice) {
+            if (invoice) {
                 Events.RemoveListenId(invoice.invoice.invoiceId);
             }
             dispatch(setInvoice(inv));
@@ -85,7 +104,7 @@ export function TipperWidget(props) {
                 </div>
             </div>
         )
-    };
+    }
 
     useEffect(() => {
         if (invoice) {
@@ -99,30 +118,7 @@ export function TipperWidget(props) {
             console.log(`Set timout for: ${diff}ms`);
 
             let link = `lightning:${invoice.quote.lnInvoice}`;
-            var qr = new QRCodeStyling({
-                width: 600,
-                height: 600,
-                data: link,
-                image: StrikeLogo,
-                margin: 5,
-                type: 'canvas',
-                imageOptions: {
-                    hideBackgroundDots: false
-                },
-                dotsOptions: {
-                    type: 'rounded'
-                },
-                cornersSquareOptions: {
-                    type: 'extra-rounded'
-                }
-            });
-            qrRef.current.innerHTML = "";
-            qr.append(qrRef.current);
-            qrRef.current.onclick = function (e) {
-                let elm = document.createElement("a");
-                elm.href = link;
-                elm.click();
-            }
+            setQrLink(link);
 
             setLoadingInvoice(false);
             Events.AddListenId(id)
@@ -139,7 +135,7 @@ export function TipperWidget(props) {
 
     return (
         <div className="widget">
-            {invoice ? <div ref={qrRef} className={loadingInvoice ? "qr-loading" : ""}></div> : <b>Loading...</b>}
+            <TipperQR link={qrLink} blur={loadingInvoice}/>
             <div className="tip-history">
                 {[...(paymentHistory || [])].sort((a, b) => {
                     let ad = new Date(a.paid).getTime();
