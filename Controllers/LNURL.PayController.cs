@@ -20,14 +20,15 @@ public class PayController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetPayConfig([FromRoute] string user)
+    public async Task<IActionResult> GetPayConfig([FromRoute] string user, [FromQuery] string? description,
+        [FromQuery] ulong? amount = null)
     {
         var baseUrl = _config?.BaseUrl ?? new Uri($"{Request.Scheme}://{Request.Host}");
 
         var profile = await _api.GetProfile(user);
         if (profile != default)
         {
-            var lnpayUri = new Uri(baseUrl, $"lnurlpay/{user}/payRequest");
+            var lnpayUri = new Uri(baseUrl, $"lnurlpay/{user}/payRequest?description={description}&amount={amount}");
             var lnurl = LNURL.LNURL.EncodeBech32(lnpayUri).ToUpper();
 
             return new JsonResult(new
@@ -42,7 +43,7 @@ public class PayController : Controller
 
     [HttpGet]
     [Route("payRequest")]
-    public IActionResult GetLNURLConfig([FromRoute] string user, [FromQuery] string description,
+    public IActionResult GetLNURLConfig([FromRoute] string user, [FromQuery] string? description,
         [FromQuery] ulong? amount = null)
     {
         var baseUrl = _config?.BaseUrl ?? new Uri($"{Request.Scheme}://{Request.Host}");
@@ -50,7 +51,7 @@ public class PayController : Controller
 
         var metadata = new List<string[]>()
         {
-            new[] {"text/plain", description}
+            new[] {"text/plain", description ?? string.Empty}
         };
 
         var req = new LNURLPayRequest()
