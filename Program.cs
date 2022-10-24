@@ -19,6 +19,7 @@ builder.Logging.AddSeq(seqSettings);
 services.AddTransient<PartnerApi>();
 services.AddHostedService<WebhookSetupService>();
 services.AddSingleton<Broker>();
+services.AddMemoryCache();
 
 services.AddCors();
 services.AddControllers().AddNewtonsoftJson();

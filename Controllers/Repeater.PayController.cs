@@ -21,7 +21,7 @@ public class RepeaterInvoiceController : Controller
         var inv = await _api.GenerateInvoice(request);
         if (inv == default) return default;
 
-        var quote = await _api.GetInvoiceQuote(inv.InvoiceId);
+        var quote = await _api.GetInvoiceQuote(inv.InvoiceId, false);
         if (quote == default) return default;
 
         return new(inv, quote);
@@ -38,7 +38,7 @@ public class RepeaterInvoiceController : Controller
             return null;
         }
         
-        var quote = await _api.GetInvoiceQuote(invoice);
+        var quote = await _api.GetInvoiceQuote(invoice, false);
         if (quote == default)
         {
             Response.StatusCode = (int)HttpStatusCode.NotFound;
