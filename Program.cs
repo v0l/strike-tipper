@@ -37,6 +37,7 @@ app.UseCors(options =>
     {
         options.AllowAnyOrigin();
     }
+
     options.AllowAnyHeader();
     options.AllowAnyMethod();
     options.AllowCredentials();
@@ -79,8 +80,20 @@ app.Use(async (context, next) =>
         }
         else
         {
-            context.Response.StatusCode = (int)HttpStatusCode.UpgradeRequired;
+            context.Response.StatusCode = (int) HttpStatusCode.UpgradeRequired;
         }
+    }
+    else
+    {
+        await next();
+    }
+});
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/.well-known/lnurlp"))
+    {
+        var username = context.Request.Path.Value!.Split("/").Last();
+        context.Response.Redirect($"/lnurlpay/{username}/payRequest", true);
     }
     else
     {
