@@ -16,12 +16,15 @@ public class PayController : Controller
     private readonly PartnerApi _api;
     private readonly TipperConfig _config;
     private readonly IMemoryCache _cache;
+    private readonly HttpClient _httpClient;
 
-    public PayController(PartnerApi api, TipperConfig config, IMemoryCache cache)
+    public PayController(PartnerApi api, TipperConfig config, IMemoryCache cache, HttpClient httpClient)
     {
         _api = api;
         _config = config;
         _cache = cache;
+        _httpClient = httpClient;
+        _httpClient.Timeout = TimeSpan.FromSeconds(5);
     }
 
     [HttpGet]
@@ -32,7 +35,8 @@ public class PayController : Controller
         var profile = await _api.GetProfile(user);
         if (profile != default)
         {
-            var lnpayUri = new Uri(baseUrl, $"lnurlpay/{user}/payRequest?description={Uri.EscapeDataString(description)}");
+            var lnpayUri = new Uri(baseUrl,
+                $"lnurlpay/{user}/payRequest?description={Uri.EscapeDataString(description)}");
             var lnurl = LNURL.LNURL.EncodeBech32(lnpayUri);
 
             return new JsonResult(new
@@ -46,15 +50,34 @@ public class PayController : Controller
     }
 
     [HttpGet("payRequest")]
-    public IActionResult GetLNURLConfig([FromRoute] string user, [FromQuery] string? description)
+    public async Task<IActionResult> GetLNURLConfig([FromRoute] string user, [FromQuery] string? description)
     {
         var baseUrl = _config?.BaseUrl ?? new Uri($"{Request.Scheme}://{Request.Host}");
         var id = Guid.NewGuid();
 
-        var metadata = new List<string[]>()
+        string? avatar = null;
+        try
+        {
+            var profile = await _api.GetProfile(user);
+            if (!string.IsNullOrEmpty(profile?.AvatarUrl))
+            {
+                var imageData = await _httpClient.GetByteArrayAsync(profile.AvatarUrl);
+                avatar = Convert.ToBase64String(imageData);
+            }
+        }
+        catch (Exception ex)
+        {
+            // log error
+        }
+
+        var metadata = new List<string?[]>()
         {
             new[] {"text/plain", description ?? string.Empty}
         };
+        if (avatar != null)
+        {
+            metadata.Add(new[] {"image/png;base64", avatar});
+        }
 
         var req = new LNURLPayRequest()
         {
@@ -86,6 +109,12 @@ public class PayController : Controller
                 throw new InvalidOperationException($"Cannot find request for invoice {id}");
             }
 
+            var metadata = JsonConvert.DeserializeObject<List<string[]>>(invoiceRequest.Metadata);
+
+            // extract description from metadata
+            var description = metadata?.FirstOrDefault(a =>
+                a.Length == 2 && a[0].Equals("text/plain", StringComparison.InvariantCultureIgnoreCase))?[1];
+
             var invoice = await _api.GenerateInvoice(new()
             {
                 Amount = new()
@@ -96,7 +125,7 @@ public class PayController : Controller
                     Currency = Currencies.BTC
                 },
                 CorrelationId = id.ToString(),
-                Description = invoiceRequest.Metadata,
+                Description = description ?? invoiceRequest.Metadata,
                 Handle = user
             });
             if (invoice == null) throw new Exception("Failed to get invoice!");
