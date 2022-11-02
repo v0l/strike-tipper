@@ -37,6 +37,7 @@ public class PayController : Controller
         {
             var lnpayUri = new Uri(baseUrl,
                 $"lnurlpay/{user}/payRequest?description={Uri.EscapeDataString(description)}");
+
             var lnurl = LNURL.LNURL.EncodeBech32(lnpayUri);
 
             return new JsonResult(new
@@ -74,6 +75,7 @@ public class PayController : Controller
         {
             new[] {"text/plain", description ?? string.Empty}
         };
+
         if (avatar != null)
         {
             metadata.Add(new[] {"image/png;base64", avatar});
@@ -85,6 +87,7 @@ public class PayController : Controller
             MaxSendable = LightMoney.Satoshis(10_000_000),
             MinSendable = LightMoney.Satoshis(1_000),
             Metadata = JsonConvert.SerializeObject(metadata),
+            CommentAllowed = 250,
             Tag = "payRequest"
         };
 
@@ -93,7 +96,8 @@ public class PayController : Controller
     }
 
     [HttpGet("payRequest/invoice")]
-    public async Task<IActionResult> GetInvoice([FromRoute] string user, [FromQuery] Guid id, [FromQuery] long amount)
+    public async Task<IActionResult> GetInvoice([FromRoute] string user, [FromQuery] Guid id, [FromQuery] long amount,
+        [FromQuery] string? comment)
     {
         try
         {
@@ -125,9 +129,10 @@ public class PayController : Controller
                     Currency = Currencies.BTC
                 },
                 CorrelationId = id.ToString(),
-                Description = description ?? invoiceRequest.Metadata,
+                Description = comment ?? description ?? invoiceRequest.Metadata,
                 Handle = user
             });
+
             if (invoice == null) throw new Exception("Failed to get invoice!");
 
             var descriptionHashData = SHA256.HashData(Encoding.UTF8.GetBytes(invoiceRequest.Metadata));
