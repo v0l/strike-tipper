@@ -73,7 +73,8 @@ public class PayController : Controller
 
         var metadata = new List<string?[]>()
         {
-            new[] {"text/plain", description ?? string.Empty}
+            new[] {"text/plain", description ?? string.Empty},
+            new[] {"text/identifier", $"{user}@{baseUrl.Host}"}
         };
 
         if (avatar != null)
