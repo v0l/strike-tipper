@@ -20,6 +20,7 @@ services.AddTransient<PartnerApi>();
 services.AddHostedService<WebhookSetupService>();
 services.AddSingleton<Broker>();
 services.AddMemoryCache();
+services.AddHttpClient();
 
 services.AddCors();
 services.AddControllers().AddNewtonsoftJson();
