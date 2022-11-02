@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
 using BTCPayServer.Lightning;
 using LNURL;
 using Microsoft.AspNetCore.Mvc;
@@ -99,7 +101,9 @@ public class PayController : Controller
             });
             if (invoice == null) throw new Exception("Failed to get invoice!");
 
-            var quote = await _api.GetInvoiceQuote(invoice.InvoiceId, true);
+            var descriptionHashData = SHA256.HashData(Encoding.UTF8.GetBytes(invoiceRequest.Metadata));
+            var hexDescriptionHash = BitConverter.ToString(descriptionHashData).Replace("-", string.Empty).ToLower();
+            var quote = await _api.GetInvoiceQuote(invoice.InvoiceId, hexDescriptionHash);
             var rsp = new LNURLPayRequest.LNURLPayRequestCallbackResponse()
             {
                 Pr = quote.LnInvoice

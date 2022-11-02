@@ -46,9 +46,9 @@ public class PartnerApi
         return SendRequest<Invoice>(HttpMethod.Get, $"/v1/invoices/{id}");
     }
 
-    public Task<InvoiceQuote?> GetInvoiceQuote(Guid id, bool useDescriptionHash)
+    public Task<InvoiceQuote?> GetInvoiceQuote(Guid id, string descriptionHash)
     {
-        return SendRequest<InvoiceQuote>(HttpMethod.Post, $"/v1/invoices/{id}/quote?useDescriptionHash={useDescriptionHash}");
+        return SendRequest<InvoiceQuote>(HttpMethod.Post, $"/v1/invoices/{id}/quote?descriptionHash={descriptionHash}");
     }
 
     public Task<IEnumerable<WebhookSubscription>?> GetWebhookSubscriptions()
